@@ -15,12 +15,12 @@
 */
 package io.github.kaiso.relmongo.mongo;
 
-import java.util.Collection;
+import io.github.kaiso.relmongo.exception.RelMongoProcessingException;
+import io.github.kaiso.relmongo.util.RelMongoConstants;
 
 import org.bson.Document;
 
-import io.github.kaiso.relmongo.exception.RelMongoProcessingException;
-import io.github.kaiso.relmongo.util.RelMongoConstants;
+import java.util.Collection;
 
 public final class DocumentUtils {
 
@@ -60,11 +60,11 @@ public final class DocumentUtils {
     }
 
     public static Object mapIdentifier(Object object) {
-        Object id = ((Document) object).get("_id");
+        Object id = ((org.bson.Document) object).get("_id");
         if (id == null) {
             throw new RelMongoProcessingException("_id must not be null");
         }
-        return (id instanceof org.bson.types.ObjectId) ? id : id;
+        return id;
     }
 
 }
