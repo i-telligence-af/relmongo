@@ -82,6 +82,7 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
                 
                 PersistentPropertyPostLoadingCallback callback = new PersistentPropertyPostLoadingCallback(object, nestedDocument, mongoOperations);
                 ReflectionUtils.doWithFields(object.getClass(), callback);
+                callback.close();
                 
             }
             return;

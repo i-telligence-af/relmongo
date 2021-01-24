@@ -83,6 +83,7 @@ public class RelMongoProcessor extends AbstractMongoEventListener<Object> {
         if (event.getSource().getClass().isAnnotationPresent(Document.class)) {
             PersistentPropertyPostLoadingCallback callback = new PersistentPropertyPostLoadingCallback(event.getSource(), event.getDocument(), mongoOperations);
             ReflectionUtils.doWithFields(event.getSource().getClass(), callback);
+            callback.close();
         }
         super.onAfterConvert(event);
     }
