@@ -65,12 +65,14 @@
 		</developer>
 	</developers>
 
+    <!-- 
 	<scm>
 		<connection>scm:git:git://github.com/kaiso/relmongo.git</connection>
 		<developerConnection>scm:git:git@github.com:kaiso/relmongo.git</developerConnection>
 		<url>http://github.com/kaiso/relmongo/tree/master</url>
 	</scm>
-
+    -->
+    
 	<dependencies>
 
 		<dependency>
