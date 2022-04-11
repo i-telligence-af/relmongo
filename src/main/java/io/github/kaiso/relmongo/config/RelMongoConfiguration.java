@@ -59,7 +59,7 @@ public class RelMongoConfiguration {
 
     @Bean
     public RelMongoProcessor mongoEventListener(MongoOperations mongoOperations) {
-        return new RelMongoProcessor(mongoOperations, FetchType.EAGER);
+        return new RelMongoProcessor(mongoOperations, null);
     }
 
     public void setUp() {
