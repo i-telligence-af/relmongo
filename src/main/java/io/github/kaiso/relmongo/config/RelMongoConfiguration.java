@@ -17,6 +17,7 @@
 
 package io.github.kaiso.relmongo.config;
 
+import io.github.kaiso.relmongo.annotation.FetchType;
 import io.github.kaiso.relmongo.events.processor.RelMongoProcessor;
 
 import org.slf4j.Logger;
@@ -58,10 +59,9 @@ public class RelMongoConfiguration {
 
     @Bean
     public RelMongoProcessor mongoEventListener(MongoOperations mongoOperations) {
-        return new RelMongoProcessor(mongoOperations);
+        return new RelMongoProcessor(mongoOperations, FetchType.EAGER);
     }
 
-    
     public void setUp() {
         CompletableFuture.runAsync(() -> {
             if (context.getBeanNamesForType(MongoTemplate.class).length > 0) {

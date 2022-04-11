@@ -16,12 +16,6 @@
 
 package io.github.kaiso.relmongo.events.processor;
 
-import io.github.kaiso.relmongo.events.callback.PersistentPropertyCascadingRemoveCallback;
-import io.github.kaiso.relmongo.events.callback.PersistentPropertyConvertingCallback;
-import io.github.kaiso.relmongo.events.callback.PersistentPropertyPostLoadingCallback;
-import io.github.kaiso.relmongo.events.callback.PersistentPropertyPostSavingCallback;
-import io.github.kaiso.relmongo.events.callback.PersistentPropertySavingCallback;
-
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.event.AbstractMongoEventListener;
@@ -33,6 +27,13 @@ import org.springframework.data.mongodb.core.mapping.event.BeforeDeleteEvent;
 import org.springframework.data.mongodb.core.mapping.event.BeforeSaveEvent;
 import org.springframework.util.ReflectionUtils;
 
+import io.github.kaiso.relmongo.annotation.FetchType;
+import io.github.kaiso.relmongo.events.callback.PersistentPropertyCascadingRemoveCallback;
+import io.github.kaiso.relmongo.events.callback.PersistentPropertyConvertingCallback;
+import io.github.kaiso.relmongo.events.callback.PersistentPropertyPostLoadingCallback;
+import io.github.kaiso.relmongo.events.callback.PersistentPropertyPostSavingCallback;
+import io.github.kaiso.relmongo.events.callback.PersistentPropertySavingCallback;
+
 /**
  * 
  * @author Kais OMRI
@@ -41,11 +42,15 @@ import org.springframework.util.ReflectionUtils;
 public class RelMongoProcessor extends AbstractMongoEventListener<Object> {
 
     private MongoOperations mongoOperations;
+    
+    private final FetchType forceFetchType;
 
-    public RelMongoProcessor(MongoOperations mongoOperations) {
+    public RelMongoProcessor(MongoOperations mongoOperations, FetchType forceFetchType) {
         super();
-        this.mongoOperations = mongoOperations;
+        this.mongoOperations    = mongoOperations;
+        this.forceFetchType     = forceFetchType;
     }
+    
 
     @Override
     public void onAfterLoad(AfterLoadEvent<Object> event) {
@@ -81,7 +86,7 @@ public class RelMongoProcessor extends AbstractMongoEventListener<Object> {
     @Override
     public void onAfterConvert(AfterConvertEvent<Object> event) {
         if (event.getSource().getClass().isAnnotationPresent(Document.class)) {
-            PersistentPropertyPostLoadingCallback callback = new PersistentPropertyPostLoadingCallback(event.getSource(), event.getDocument(), mongoOperations);
+            PersistentPropertyPostLoadingCallback callback = new PersistentPropertyPostLoadingCallback(event.getSource(), event.getDocument(), mongoOperations, forceFetchType);
             ReflectionUtils.doWithFields(event.getSource().getClass(), callback);
         }
         super.onAfterConvert(event);

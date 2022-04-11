@@ -45,9 +45,12 @@ public class PersistentPropertyLoadingCallback implements FieldCallback {
     private List<LoadableObjectsMetadata> loadableObjects = new ArrayList<>();
     private Object source;
 
-    public PersistentPropertyLoadingCallback(Object source) {
+    private final FetchType forceFetchType;
+    
+    public PersistentPropertyLoadingCallback(Object source, FetchType forceFetchType) {
         super();
         this.source = source;
+        this.forceFetchType = forceFetchType;
     }
 
     public void doWith(Field field) throws IllegalAccessException {
@@ -85,6 +88,10 @@ public class PersistentPropertyLoadingCallback implements FieldCallback {
             throw new RelMongoConfigurationException("Property defined in @JoinProperty annotation is not present", e);
         }
 
+        if ( this.forceFetchType != null ) {
+            fetchType = this.forceFetchType;
+        }
+        
         loadableObjects.add(new LoadableObjectsMetadata(field.getName(), name, "_id", ReflectionsUtil.getGenericType(field), fetchType, ids));
     }
 

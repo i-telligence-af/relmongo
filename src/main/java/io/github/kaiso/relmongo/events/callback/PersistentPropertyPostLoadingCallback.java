@@ -52,11 +52,14 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
     private MongoOperations mongoOperations;
     private Document document;
 
-    public PersistentPropertyPostLoadingCallback(Object source, Document document, MongoOperations mongoOperations) {
+    private final FetchType forceFetchType;
+    
+    public PersistentPropertyPostLoadingCallback(Object source, Document document, MongoOperations mongoOperations, FetchType forceFetchType) {
         super();
         this.source = source;
         this.mongoOperations = mongoOperations;
         this.document = document;
+        this.forceFetchType = forceFetchType;
     }
 
     public void doWith(Field field) throws IllegalAccessException {
@@ -68,7 +71,7 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
 
                 Document nestedDocument = (Document) ((org.bson.Document) document).get(field.getName());
                 
-                PersistentPropertyPostLoadingCallback callback = new PersistentPropertyPostLoadingCallback(object, nestedDocument, mongoOperations);
+                PersistentPropertyPostLoadingCallback callback = new PersistentPropertyPostLoadingCallback(object, nestedDocument, mongoOperations, forceFetchType);
                 ReflectionUtils.doWithFields(object.getClass(), callback);
                 
             }
@@ -83,6 +86,10 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
 
         FetchType fetchType = AnnotationsUtils.getFetchType(field);
 
+        if ( this.forceFetchType != null ) {
+            fetchType = forceFetchType;
+        }
+        
         if (DocumentUtils.isLoaded(document.get(field.getName()))) {
             MappedByProcessor.processChild(source, source, field, type);
             return;
