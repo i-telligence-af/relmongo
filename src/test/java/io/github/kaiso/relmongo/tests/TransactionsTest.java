@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.mongodb.MongoDbFactory;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.MongoTransactionException;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.MongoOperations;
@@ -73,7 +73,7 @@ public class TransactionsTest extends AbstractBaseTest {
     public static class TransactionConfig {
 
         @Bean
-        MongoTransactionManager transactionManager(MongoDbFactory dbFactory) {
+        MongoTransactionManager transactionManager(MongoDatabaseFactory dbFactory) {
             return new MongoTransactionManager(dbFactory);
         }
 
