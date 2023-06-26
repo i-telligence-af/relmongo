@@ -109,6 +109,14 @@
             <artifactId>mongodb-driver-core</artifactId>
             <version>4.10.1</version>
         </dependency>
+        
+        <!-- https://mvnrepository.com/artifact/org.mongodb/mongodb-driver-sync -->
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>4.10.1</version>
+        </dependency>
+
 
 
 		<!-- test dependencies -->

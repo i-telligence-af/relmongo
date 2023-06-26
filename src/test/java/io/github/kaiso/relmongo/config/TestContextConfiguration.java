@@ -126,12 +126,11 @@ public class TestContextConfiguration extends AbstractMongoClientConfiguration {
     @Bean
     @Primary
     @Override
-    public CustomConversions customConversions() {
+    public MongoCustomConversions customConversions() {
         return new MongoCustomConversions(Collections.singletonList(new RMLocalDateTimeToDateConverter()));
     }
 
     @Bean
-    @Override
     public MappingMongoConverter mappingMongoConverter() throws Exception {
         DbRefResolver dbRefResolver = new DefaultDbRefResolver(mongoDbFactory());
         MappingMongoConverter converter = new MappingMongoConverter(dbRefResolver, customMappingContext());
