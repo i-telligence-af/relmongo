@@ -68,36 +68,57 @@ public class PersistentPropertySavingCallback implements FieldCallback {
 
     }
 
+    private void handleBasicDBList(Field field, CascadeType cascadeType, Boolean orphanRemoval, BasicDBList reference, String childCollectionName, String name) {
+        BasicDBList list = new BasicDBList();
+        list.addAll(reference.stream()
+                .map(dbObject -> this.keepOnlyIdentifier(dbObject, childCollectionName, cascadeType))
+                .collect(Collectors.toList()));
+        ((org.bson.Document) source).remove(field.getName());
+        ((org.bson.Document) source).put(name, list);
+        if (Boolean.TRUE.equals(orphanRemoval)) {
+            removeOrphans(((org.bson.Document) source).get("_id"),
+                    list.parallelStream().map(o -> ((org.bson.Document) o).get("_id")).collect(Collectors.toList()),
+                    name,
+                    field);
+        }
+    }
+
+    private void handleDocument(Field field, CascadeType cascadeType, Boolean orphanRemoval, Object reference, String childCollectionName, String name) {
+        ((org.bson.Document) source).remove(field.getName());
+        org.bson.Document child = this.keepOnlyIdentifier(reference, childCollectionName, cascadeType);
+        ((org.bson.Document) source).put(name, child);
+        if (Boolean.TRUE.equals(orphanRemoval)) {
+            removeOrphans(((org.bson.Document) source).get("_id"), Arrays.asList(child.get("_id")), name, field);
+        }
+    }
+
     private void saveAssociation(Field field, CascadeType cascadeType, Boolean orphanRemoval) {
         String name = AnnotationsUtils.getJoinProperty(field);
         Object reference = null;
         reference = ((org.bson.Document) source).get(field.getName());
         String childCollectionName = AnnotationsUtils.getCollectionName(field);
         if (reference instanceof BasicDBList) {
-            BasicDBList list = new BasicDBList();
-            list.addAll(((BasicDBList) reference).stream()
-                .map(dbObject -> this.keepOnlyIdentifier(dbObject, childCollectionName, cascadeType))
-                .collect(Collectors.toList()));
-            ((org.bson.Document) source).remove(field.getName());
-            ((org.bson.Document) source).put(name, list);
-            if (Boolean.TRUE.equals(orphanRemoval)) {
-                removeOrphans(((org.bson.Document) source).get("_id"),
-                    list.parallelStream().map(o -> ((org.bson.Document) o).get("_id")).collect(Collectors.toList()),
-                    name,
-                    field);
-            }
+            handleBasicDBList(field, cascadeType, orphanRemoval, (BasicDBList) reference, childCollectionName, name);
         } else if (reference instanceof org.bson.Document) {
-            ((org.bson.Document) source).remove(field.getName());
-            org.bson.Document child = this.keepOnlyIdentifier(reference, childCollectionName, cascadeType);
-            ((org.bson.Document) source).put(name, child);
-            if (Boolean.TRUE.equals(orphanRemoval)) {
-                removeOrphans(((org.bson.Document) source).get("_id"), Arrays.asList(child.get("_id")), name, field);
+            handleDocument(field, cascadeType, orphanRemoval, reference, childCollectionName, name);
+        } else if ( reference instanceof ArrayList ) {
+
+            for ( Object child : (ArrayList<?>)reference ){
+                if ( child instanceof BasicDBList ){
+                    handleBasicDBList(field, cascadeType, orphanRemoval, (BasicDBList) child, childCollectionName, name);
+                } else if ( child instanceof org.bson.Document ){
+                    handleDocument(field, cascadeType, orphanRemoval, child, childCollectionName, name);
+                }
             }
+
         } else if (reference == null && Boolean.TRUE.equals(orphanRemoval)) {
             removeOrphans(((org.bson.Document) source).get("_id"), Collections.emptyList(), name, field);
         }
 
     }
+
+
+
 
     private org.bson.Document keepOnlyIdentifier(Object obj, String collection, CascadeType cascadeType) {
         Object objectId = ((org.bson.Document) obj).get("_id");
