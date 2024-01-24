@@ -12,7 +12,7 @@ import org.springframework.util.Assert;
 
 import java.util.Map;
 
-@Order(2)
+@Order(3)
 public class RelMongoProcessorRegistrar implements ImportBeanDefinitionRegistrar {
 
     @Override
