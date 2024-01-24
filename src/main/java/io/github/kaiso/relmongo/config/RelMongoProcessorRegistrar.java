@@ -6,11 +6,13 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.Assert;
 
 import java.util.Map;
 
+@Order(2)
 public class RelMongoProcessorRegistrar implements ImportBeanDefinitionRegistrar {
 
     @Override
