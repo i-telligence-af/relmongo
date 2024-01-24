@@ -1,26 +1,22 @@
 /**
-*   Copyright 2018 Kais OMRI and authors.
-*
-*   Licensed under the Apache License, Version 2.0 (the "License");
-*   you may not use this file except in compliance with the License.
-*   You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-*/
+ *   Copyright 2018 Kais OMRI and authors.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 
 package io.github.kaiso.relmongo.events.callback;
 
-import io.github.kaiso.relmongo.annotation.FetchType;
-import io.github.kaiso.relmongo.annotation.ManyToOne;
-import io.github.kaiso.relmongo.annotation.Nested;
-import io.github.kaiso.relmongo.annotation.OneToMany;
-import io.github.kaiso.relmongo.annotation.OneToOne;
+import io.github.kaiso.relmongo.annotation.*;
 import io.github.kaiso.relmongo.events.processor.MappedByProcessor;
 import io.github.kaiso.relmongo.exception.RelMongoConfigurationException;
 import io.github.kaiso.relmongo.model.MappedByMetadata;
@@ -42,7 +38,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 
+ *
  * @author Kais OMRI
  *
  */
@@ -53,7 +49,7 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
     private Document document;
 
     private final FetchType forceFetchType;
-    
+
     public PersistentPropertyPostLoadingCallback(Object source, Document document, MongoOperations mongoOperations, FetchType forceFetchType) {
         super();
         this.source = source;
@@ -70,14 +66,14 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
             if ( object != null ) {
 
                 Document nestedDocument = (Document) ((org.bson.Document) document).get(field.getName());
-                
+
                 PersistentPropertyPostLoadingCallback callback = new PersistentPropertyPostLoadingCallback(object, nestedDocument, mongoOperations, forceFetchType);
                 ReflectionUtils.doWithFields(object.getClass(), callback);
-                
+
             }
             return;
         }
-        
+
         if (!(field.isAnnotationPresent(OneToOne.class) || field.isAnnotationPresent(OneToMany.class) || field.isAnnotationPresent(ManyToOne.class))) {
             return;
         }
@@ -86,10 +82,6 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
 
         FetchType fetchType = AnnotationsUtils.getFetchType(field);
 
-        if ( this.forceFetchType != null ) {
-            fetchType = forceFetchType;
-        }
-        
         if (DocumentUtils.isLoaded(document.get(field.getName()))) {
             MappedByProcessor.processChild(source, source, field, type);
             return;
@@ -106,12 +98,12 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
             Object relations = document.get(joinPropertyName);
 
             if (relations == null || (relations instanceof Document && ((Document) relations).keySet().isEmpty())
-                || (relations instanceof Collection && ((Collection<?>) relations).isEmpty())) {
+                    || (relations instanceof Collection && ((Collection<?>) relations).isEmpty())) {
                 return;
             }
             if (relations instanceof Collection) {
                 identifierList.addAll(((Collection<?>) relations).stream()
-                    .map(DocumentUtils::mapIdentifier).collect(Collectors.toList()));
+                        .map(DocumentUtils::mapIdentifier).collect(Collectors.toList()));
             } else {
                 identifierList.add(DocumentUtils.mapIdentifier(relations));
             }
@@ -122,15 +114,15 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
         if (FetchType.LAZY.equals(fetchType) || mappedByInfos.getMappedByValue() != null) {
             // mappedBy fields are loaded only in lazy mode to avoid cycles in loading
             ReflectionUtils.setField(field, source, PersistentRelationResolver.lazyLoader(field.getType(), mongoOperations,
-                identifierList, mappedByInfos.getMappedByJoinProperty(), type,
-                field.get(source), source, field.getName()));
+                    identifierList, mappedByInfos.getMappedByJoinProperty(), type,
+                    field.get(source), source, field.getName()));
         } else if (FetchType.EAGER.equals(fetchType)) {
             if (Collection.class.isAssignableFrom(field.getType())) {
                 ReflectionUtils.setField(field, source,
-                    DatabaseOperations.findByIds(mongoOperations, type, identifierList.toArray(new Object[identifierList.size()])));
+                        DatabaseOperations.findByIds(mongoOperations, type, identifierList.toArray(new Object[identifierList.size()])));
             } else {
                 ReflectionUtils.setField(field, source,
-                    DatabaseOperations.findByPropertyValue(mongoOperations, type, "_id", identifierList.get(0)));
+                        DatabaseOperations.findByPropertyValue(mongoOperations, type, "_id", identifierList.get(0)));
             }
             MappedByProcessor.processChild(source, source, field, type);
         }
