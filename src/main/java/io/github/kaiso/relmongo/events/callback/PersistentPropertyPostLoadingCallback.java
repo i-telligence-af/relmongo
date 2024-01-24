@@ -81,6 +81,9 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
         Class<?> type = ReflectionsUtil.getGenericType(field);
 
         FetchType fetchType = AnnotationsUtils.getFetchType(field);
+        if ( forceFetchType != null ) {
+            fetchType = forceFetchType;
+        }
 
         if (DocumentUtils.isLoaded(document.get(field.getName()))) {
             MappedByProcessor.processChild(source, source, field, type);

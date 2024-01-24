@@ -1,5 +1,6 @@
 package io.github.kaiso.relmongo.config;
 
+import io.github.kaiso.relmongo.annotation.FetchType;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -21,9 +22,22 @@ public class RelMongoProcessorRegistrar implements ImportBeanDefinitionRegistrar
         String mongoTemplateRef = (String) annotationAttributes.get("mongoTemplateRef");
         Assert.notNull(mongoTemplateRef, "mongoTemplateRef in @EnableRelMongo must not be null!");
 
+        boolean useForceFetchType = (boolean) annotationAttributes.get("useForceFetchType");
+
+        FetchType forceFetchType = (FetchType) annotationAttributes.get("forceFetchType");
+
         BeanDefinitionBuilder postProcessorDefinitionBuilder = BeanDefinitionBuilder
             .rootBeanDefinition(RelMongoBeanPostProcessor.class);
-        postProcessorDefinitionBuilder.addConstructorArgValue(mongoTemplateRef);
+        postProcessorDefinitionBuilder
+                .addConstructorArgValue(mongoTemplateRef)
+        ;
+
+        if ( useForceFetchType ){
+            postProcessorDefinitionBuilder
+                .addConstructorArgValue(forceFetchType)
+            ;
+        } else {
+        }
 
         String beanName = mongoTemplateRef + "$RelMongo$BeanPostProcessor";
         if (!registry.containsBeanDefinition(beanName)) {

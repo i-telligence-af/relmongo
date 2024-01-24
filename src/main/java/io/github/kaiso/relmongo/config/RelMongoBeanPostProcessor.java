@@ -24,6 +24,10 @@ public class RelMongoBeanPostProcessor implements BeanPostProcessor {
         this.forceFetchType = forceFetchType;
     }
 
+    public RelMongoBeanPostProcessor(String mongoTemplateRef){
+        this(mongoTemplateRef, null);
+    }
+
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 
@@ -73,7 +77,9 @@ public class RelMongoBeanPostProcessor implements BeanPostProcessor {
         @Override
         public void publishEvent(Object event) {
             relMongoProcessor.onApplicationEvent((MongoMappingEvent<?>) event, mongoTemplate);
-            eventPublisher.publishEvent(event);
+            if ( eventPublisher != null ){
+                eventPublisher.publishEvent(event);
+            }
         }
 
     }

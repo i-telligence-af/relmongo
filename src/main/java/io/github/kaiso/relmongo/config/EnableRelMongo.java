@@ -16,16 +16,14 @@
 
 package io.github.kaiso.relmongo.config;
 
+import io.github.kaiso.relmongo.annotation.FetchType;
 import io.github.kaiso.relmongo.annotation.OneToMany;
 import io.github.kaiso.relmongo.annotation.OneToOne;
 
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * Enables the RelMongo framework processing.<br>
@@ -48,5 +46,9 @@ public @interface EnableRelMongo {
      * @return
      */
     String mongoTemplateRef() default "mongoTemplate";
+
+    FetchType forceFetchType() default FetchType.EAGER;
+
+    boolean useForceFetchType() default false;
 
 }
