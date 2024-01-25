@@ -116,9 +116,10 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
 
         if (FetchType.LAZY.equals(fetchType) || mappedByInfos.getMappedByValue() != null) {
             // mappedBy fields are loaded only in lazy mode to avoid cycles in loading
-            ReflectionUtils.setField(field, source, PersistentRelationResolver.lazyLoader(field.getType(), mongoOperations,
+            Object value = PersistentRelationResolver.lazyLoader(field.getType(), mongoOperations,
                     identifierList, mappedByInfos.getMappedByJoinProperty(), type,
-                    field.get(source), source, field.getName()));
+                    field.get(source), source, field.getName());
+            ReflectionUtils.setField(field, source, value);
         } else if (FetchType.EAGER.equals(fetchType)) {
             if (Collection.class.isAssignableFrom(field.getType())) {
                 ReflectionUtils.setField(field, source,

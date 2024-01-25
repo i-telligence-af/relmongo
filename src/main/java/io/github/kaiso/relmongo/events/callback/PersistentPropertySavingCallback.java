@@ -101,17 +101,19 @@ public class PersistentPropertySavingCallback implements FieldCallback {
             handleBasicDBList(field, cascadeType, orphanRemoval, (BasicDBList) reference, childCollectionName, name);
         } else if (reference instanceof org.bson.Document) {
             handleDocument(field, cascadeType, orphanRemoval, reference, childCollectionName, name);
-        } else if ( reference instanceof ArrayList ) {
+        }
+        else if ( reference instanceof ArrayList ) {
 
             for ( Object child : (ArrayList<?>)reference ){
                 if ( child instanceof BasicDBList ){
-                    handleBasicDBList(field, cascadeType, orphanRemoval, (BasicDBList) child, childCollectionName, name);
+                    //handleBasicDBList(field, cascadeType, orphanRemoval, (BasicDBList) child, childCollectionName, name);
                 } else if ( child instanceof org.bson.Document ){
-                    handleDocument(field, cascadeType, orphanRemoval, child, childCollectionName, name);
+                    //handleDocument(field, cascadeType, orphanRemoval, child, childCollectionName, name);
+                    ((org.bson.Document) child).append(RelMongoConstants.RELMONGOTARGET_PROPERTY_NAME, childCollectionName);
                 }
             }
 
-        } else if (reference == null && Boolean.TRUE.equals(orphanRemoval)) {
+        }  else if (reference == null && Boolean.TRUE.equals(orphanRemoval)) {
             removeOrphans(((org.bson.Document) source).get("_id"), Collections.emptyList(), name, field);
         }
 
