@@ -1,6 +1,8 @@
 package io.github.kaiso.relmongo.config;
 
 import io.github.kaiso.relmongo.annotation.FetchType;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -12,7 +14,7 @@ import org.springframework.util.Assert;
 
 import java.util.Map;
 
-@Order(1)
+//@Order(1)
 public class RelMongoProcessorRegistrar implements ImportBeanDefinitionRegistrar {
 
     @Override
@@ -23,6 +25,12 @@ public class RelMongoProcessorRegistrar implements ImportBeanDefinitionRegistrar
         }
         String mongoTemplateRef = (String) annotationAttributes.get("mongoTemplateRef");
         Assert.notNull(mongoTemplateRef, "mongoTemplateRef in @EnableRelMongo must not be null!");
+
+        try {
+            BeanDefinition mongoTemplateDef = registry.getBeanDefinition(mongoTemplateRef);
+        } catch ( NoSuchBeanDefinitionException e ){
+            return;
+        }
 
         boolean useForceFetchType = (boolean) annotationAttributes.get("useForceFetchType");
 
