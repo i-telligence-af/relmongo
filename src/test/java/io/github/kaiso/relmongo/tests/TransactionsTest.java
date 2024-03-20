@@ -1,14 +1,5 @@
 package io.github.kaiso.relmongo.tests;
 
-import io.github.kaiso.relmongo.data.model.Car;
-import io.github.kaiso.relmongo.data.model.DrivingLicense;
-import io.github.kaiso.relmongo.data.model.House;
-import io.github.kaiso.relmongo.data.model.Passport;
-import io.github.kaiso.relmongo.data.model.Person;
-import io.github.kaiso.relmongo.data.model.State;
-import io.github.kaiso.relmongo.data.repository.PersonRepository;
-import io.github.kaiso.relmongo.tests.common.AbstractBaseTest;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -26,6 +17,15 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import io.github.kaiso.relmongo.data.model.Car;
+import io.github.kaiso.relmongo.data.model.DrivingLicense;
+import io.github.kaiso.relmongo.data.model.House;
+import io.github.kaiso.relmongo.data.model.Passport;
+import io.github.kaiso.relmongo.data.model.Person;
+import io.github.kaiso.relmongo.data.model.State;
+import io.github.kaiso.relmongo.data.repository.PersonRepository;
+import io.github.kaiso.relmongo.tests.common.AbstractBaseTest;
 
 @ContextConfiguration(classes = { TransactionsTest.class })
 public class TransactionsTest extends AbstractBaseTest {
