@@ -14,74 +14,74 @@ import java.lang.reflect.Field;
 
 public class RelMongoBeanPostProcessor implements BeanPostProcessor {
 
-    private final String mongoTemplateRef;
+	private final String mongoTemplateRef;
 
-    private final FetchType forceFetchType;
+	private final FetchType forceFetchType;
 
-    public RelMongoBeanPostProcessor(String mongoTemplateRef, FetchType forceFetchType) {
-        super();
-        this.mongoTemplateRef = mongoTemplateRef;
-        this.forceFetchType = forceFetchType;
-    }
+	public RelMongoBeanPostProcessor(String mongoTemplateRef, FetchType forceFetchType) {
+		super();
+		this.mongoTemplateRef = mongoTemplateRef;
+		this.forceFetchType = forceFetchType;
+	}
 
-    public RelMongoBeanPostProcessor(String mongoTemplateRef){
-        this(mongoTemplateRef, null);
-    }
+	public RelMongoBeanPostProcessor(String mongoTemplateRef){
+		this(mongoTemplateRef, null);
+	}
 
-    @Override
-    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+	@Override
+	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 
-        if (bean instanceof MongoTemplate && beanName.equals(mongoTemplateRef)) {
+		if (bean instanceof MongoTemplate && beanName.equals(mongoTemplateRef)) {
 
-            /*
-             * Enhancer enhancer = new Enhancer();
-             * enhancer.setSuperclass(bean.getClass());
-             * enhancer.setCallbacks(new MethodInterceptor[] { new
-             * RelMongoTemplateInvocationHandler() });
-             *
-             * Object proxy = enhancer.create(new Class<?>[] { MongoDbFactory.class,
-             * MongoConverter.class },
-             * new Object[] { ((MongoTemplate) bean).getMongoDbFactory(), ((MongoTemplate)
-             * bean).getConverter() });
-             *
-             * ((MongoTemplate) proxy).setApplicationContext(applicationContext);
-             *
-             * return proxy;
-             */
+			/*
+			 * Enhancer enhancer = new Enhancer();
+			 * enhancer.setSuperclass(bean.getClass());
+			 * enhancer.setCallbacks(new MethodInterceptor[] { new
+			 * RelMongoTemplateInvocationHandler() });
+			 *
+			 * Object proxy = enhancer.create(new Class<?>[] { MongoDbFactory.class,
+			 * MongoConverter.class },
+			 * new Object[] { ((MongoTemplate) bean).getMongoDbFactory(), ((MongoTemplate)
+			 * bean).getConverter() });
+			 *
+			 * ((MongoTemplate) proxy).setApplicationContext(applicationContext);
+			 *
+			 * return proxy;
+			 */
 
-            try {
-                Field ep = MongoTemplate.class.getDeclaredField("eventPublisher");
-                ep.setAccessible(true);
-                ep.set(bean, new RelMongoEventPublisher((MongoTemplate) bean, (ApplicationEventPublisher) ep.get(bean), forceFetchType));
-            } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-                throw new BeanInitializationException("Fatal: failed to init the RelMongo Engine", e);
-            }
-        }
+			try {
+				Field ep = MongoTemplate.class.getDeclaredField("eventPublisher");
+				ep.setAccessible(true);
+				ep.set(bean, new RelMongoEventPublisher((MongoTemplate) bean, (ApplicationEventPublisher) ep.get(bean), forceFetchType));
+			} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+				throw new BeanInitializationException("Fatal: failed to init the RelMongo Engine", e);
+			}
+		}
 
-        return bean;
-    }
+		return bean;
+	}
 
-    private static final class RelMongoEventPublisher implements ApplicationEventPublisher {
+	private static final class RelMongoEventPublisher implements ApplicationEventPublisher {
 
-        private final RelMongoProcessor relMongoProcessor;
-        private final MongoTemplate mongoTemplate;
-        private final ApplicationEventPublisher eventPublisher;
+		private final RelMongoProcessor relMongoProcessor;
+		private final MongoTemplate mongoTemplate;
+		private final ApplicationEventPublisher eventPublisher;
 
-        public RelMongoEventPublisher(MongoTemplate mongoTemplate, ApplicationEventPublisher eventPublisher, FetchType forceFetchType) {
-            super();
-            this.relMongoProcessor = new RelMongoProcessor(forceFetchType);
-            this.mongoTemplate = mongoTemplate;
-            this.eventPublisher = eventPublisher;
-        }
+		public RelMongoEventPublisher(MongoTemplate mongoTemplate, ApplicationEventPublisher eventPublisher, FetchType forceFetchType) {
+			super();
+			this.relMongoProcessor = new RelMongoProcessor(forceFetchType);
+			this.mongoTemplate = mongoTemplate;
+			this.eventPublisher = eventPublisher;
+		}
 
-        @Override
-        public void publishEvent(Object event) {
-            relMongoProcessor.onApplicationEvent((MongoMappingEvent<?>) event, mongoTemplate);
-            if ( eventPublisher != null ){
-                eventPublisher.publishEvent(event);
-            }
-        }
+		@Override
+		public void publishEvent(Object event) {
+			relMongoProcessor.onApplicationEvent((MongoMappingEvent<?>) event, mongoTemplate);
+			if ( eventPublisher != null ){
+				eventPublisher.publishEvent(event);
+			}
+		}
 
-    }
+	}
 
 }
