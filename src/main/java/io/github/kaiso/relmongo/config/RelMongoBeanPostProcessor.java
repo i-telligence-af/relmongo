@@ -11,6 +11,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.mapping.event.MongoMappingEvent;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class RelMongoBeanPostProcessor implements BeanPostProcessor {
 
@@ -52,8 +54,21 @@ public class RelMongoBeanPostProcessor implements BeanPostProcessor {
 			try {
 				Field ep = MongoTemplate.class.getDeclaredField("eventPublisher");
 				ep.setAccessible(true);
-				ep.set(bean, new RelMongoEventPublisher((MongoTemplate) bean, (ApplicationEventPublisher) ep.get(bean), forceFetchType));
-			} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+
+				RelMongoEventPublisher eventPublisher = new RelMongoEventPublisher((MongoTemplate) bean,
+						(ApplicationEventPublisher) ep.get(bean), forceFetchType);
+				ep.set(bean, eventPublisher);
+
+				Field edf = MongoTemplate.class.getDeclaredField("eventDelegate");
+				edf.setAccessible(true);
+
+				Object ed = edf.get(bean);
+				Method method = ed.getClass().getMethod("setPublisher", ApplicationEventPublisher.class);
+				method.setAccessible(true);
+				method.invoke(ed, eventPublisher);
+
+			} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException
+					 | InvocationTargetException | NoSuchMethodException e) {
 				throw new BeanInitializationException("Fatal: failed to init the RelMongo Engine", e);
 			}
 		}
