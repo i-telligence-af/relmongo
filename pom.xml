@@ -8,7 +8,7 @@
     -->
     <groupId>io.github.i-telligence-af.relmongo</groupId>
     <artifactId>relmongo</artifactId>
-    <version>4.0.0-RC1</version>
+    <version>4.0.0</version>
     <packaging>jar</packaging>
 
     <name>relmongo</name>
