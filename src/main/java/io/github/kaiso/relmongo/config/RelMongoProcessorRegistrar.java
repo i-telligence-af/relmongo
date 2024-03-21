@@ -15,7 +15,7 @@ import org.springframework.util.Assert;
 
 import java.util.Map;
 
-@Order(Ordered.LOWEST_PRECEDENCE)
+//@Order(Ordered.LOWEST_PRECEDENCE)
 public class RelMongoProcessorRegistrar implements ImportBeanDefinitionRegistrar {
 
     @Override
