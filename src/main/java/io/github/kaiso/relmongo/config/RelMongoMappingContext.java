@@ -1,5 +1,7 @@
 package io.github.kaiso.relmongo.config;
 
+import java.util.AbstractMap;
+
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.FieldNamingStrategy;
 import org.springframework.data.mapping.model.Property;
@@ -9,12 +11,11 @@ import org.springframework.data.mongodb.core.mapping.BasicMongoPersistentEntity;
 import org.springframework.data.mongodb.core.mapping.BasicMongoPersistentProperty;
 import org.springframework.data.mongodb.core.mapping.CachingMongoPersistentProperty;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
+import org.springframework.data.mongodb.core.mapping.MongoPersistentEntity;
 import org.springframework.data.mongodb.core.mapping.MongoPersistentProperty;
 import org.springframework.data.mongodb.core.mapping.MongoSimpleTypes;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
-
-import java.util.AbstractMap;
 
 /**
  * Default implementation of a {@link MappingContext} for MongoDB using
@@ -57,7 +58,7 @@ public class RelMongoMappingContext extends MongoMappingContext {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.springframework.data.mapping.context.AbstractMappingContext#
      * shouldCreatePersistentEntityFor(org.springframework.data.util.
      * TypeInformation)
@@ -69,7 +70,7 @@ public class RelMongoMappingContext extends MongoMappingContext {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.springframework.data.mapping.AbstractMappingContext#
      * createPersistentProperty(java.lang.reflect.Field,
      * java.beans.PropertyDescriptor,
@@ -77,14 +78,14 @@ public class RelMongoMappingContext extends MongoMappingContext {
      * org.springframework.data.mapping.SimpleTypeHolder)
      */
     @Override
-    public MongoPersistentProperty createPersistentProperty(Property property, BasicMongoPersistentEntity<?> owner,
-        SimpleTypeHolder simpleTypeHolder) {
+    public MongoPersistentProperty createPersistentProperty(Property property, MongoPersistentEntity<?> owner,
+                                                            SimpleTypeHolder simpleTypeHolder) {
         return new CachingMongoPersistentProperty(property, owner, simpleTypeHolder, fieldNamingStrategy);
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.springframework.data.mapping.BasicMappingContext#createPersistentEntity(
      * org.springframework.data.util.TypeInformation,

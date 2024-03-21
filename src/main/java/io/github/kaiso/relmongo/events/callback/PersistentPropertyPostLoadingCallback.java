@@ -27,6 +27,9 @@ import io.github.kaiso.relmongo.util.AnnotationsUtils;
 import io.github.kaiso.relmongo.util.ReflectionsUtil;
 
 import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cglib.core.CodeGenerationException;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.ReflectionUtils.FieldCallback;
@@ -44,6 +47,8 @@ import java.util.stream.Collectors;
  */
 public class PersistentPropertyPostLoadingCallback implements FieldCallback {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(PersistentPropertyPostLoadingCallback.class);
+
     private Object source;
     private MongoOperations mongoOperations;
     private Document document;
@@ -56,6 +61,17 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
         this.mongoOperations = mongoOperations;
         this.document = document;
         this.forceFetchType = forceFetchType;
+    }
+
+    private void handleEager(Field field, Class<?> type, List<Object> identifierList) {
+        if (Collection.class.isAssignableFrom(field.getType())) {
+            ReflectionUtils.setField(field, source,
+                    DatabaseOperations.findByIds(mongoOperations, type, identifierList.toArray(new Object[identifierList.size()])));
+        } else {
+            ReflectionUtils.setField(field, source,
+                    DatabaseOperations.findByPropertyValue(mongoOperations, type, "_id", identifierList.get(0)));
+        }
+        MappedByProcessor.processChild(source, source, field, type);
     }
 
     public void doWith(Field field) throws IllegalAccessException {
@@ -116,20 +132,26 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
 
         if (FetchType.LAZY.equals(fetchType) || mappedByInfos.getMappedByValue() != null) {
             // mappedBy fields are loaded only in lazy mode to avoid cycles in loading
-            Object value = PersistentRelationResolver.lazyLoader(field.getType(), mongoOperations,
-                    identifierList, mappedByInfos.getMappedByJoinProperty(), type,
-                    field.get(source), source, field.getName());
-            ReflectionUtils.setField(field, source, value);
-        } else if (FetchType.EAGER.equals(fetchType)) {
-            if (Collection.class.isAssignableFrom(field.getType())) {
-                ReflectionUtils.setField(field, source,
-                        DatabaseOperations.findByIds(mongoOperations, type, identifierList.toArray(new Object[identifierList.size()])));
-            } else {
-                ReflectionUtils.setField(field, source,
-                        DatabaseOperations.findByPropertyValue(mongoOperations, type, "_id", identifierList.get(0)));
+
+            Object object = field.get(source);
+            String fieldName = field.getName();
+
+            try {
+                Object value = PersistentRelationResolver.lazyLoader(field.getType(), mongoOperations,
+                        identifierList, mappedByInfos.getMappedByJoinProperty(), type,
+                        object, source, fieldName);
+                ReflectionUtils.setField(field, source, value);
+            } catch ( Exception e ){
+
+                LOGGER.error("Error while loading lazy field {} of type {}, falling back to FetchType." + FetchType.EAGER, fieldName, object.getClass(), e);
+                handleEager(field, type, identifierList);
+
             }
-            MappedByProcessor.processChild(source, source, field, type);
+
+        } else if (FetchType.EAGER.equals(fetchType)) {
+            handleEager(field, type, identifierList);
         }
+
     }
 
 }
