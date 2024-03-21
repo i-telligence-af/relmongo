@@ -8,7 +8,7 @@
     -->
     <groupId>io.github.i-telligence-af.relmongo</groupId>
     <artifactId>relmongo</artifactId>
-    <version>4.0.0-RC1</version>
+    <version>4.0.0</version>
     <packaging>jar</packaging>
 
     <name>relmongo</name>
@@ -66,11 +66,13 @@
         </developer>
     </developers>
 
+    <!--
     <scm>
         <connection>scm:git:git://github.com/kaiso/relmongo.git</connection>
         <developerConnection>scm:git:git@github.com:kaiso/relmongo.git</developerConnection>
         <url>http://github.com/kaiso/relmongo/tree/master</url>
     </scm>
+    -->
 
     <dependencies>
 
@@ -201,7 +203,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.4</version>
+                <version>0.8.8</version>
                 <executions>
                     <execution>
                         <id>coverage-initialize</id>
@@ -222,11 +224,10 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.0</version>
             </plugin>
-            <!--
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.7</version>
+                <version>1.6.13</version>
                 <extensions>true</extensions>
                 <configuration>
                     <serverId>ossrh</serverId>
@@ -242,7 +243,6 @@
                     <repoToken>vVnfMbOSQzR7tz7b8gyVM3iearDa8aUkT</repoToken>
                 </configuration>
             </plugin>
-            -->
         </plugins>
     </build>
 
