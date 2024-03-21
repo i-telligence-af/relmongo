@@ -224,6 +224,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.0</version>
             </plugin>
+            <!--
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
@@ -243,6 +244,7 @@
                     <repoToken>vVnfMbOSQzR7tz7b8gyVM3iearDa8aUkT</repoToken>
                 </configuration>
             </plugin>
+            -->
         </plugins>
     </build>
 
