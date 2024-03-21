@@ -37,7 +37,7 @@ public class RelMongoProcessorRegistrar implements ImportBeanDefinitionRegistrar
         try {
             BeanDefinition mongoTemplateDef = registry.getBeanDefinition(mongoTemplateRef);
         } catch ( NoSuchBeanDefinitionException e ){
-            return;
+            //return;
         }
 
         boolean useForceFetchType = (boolean) annotationAttributes.get("useForceFetchType");
