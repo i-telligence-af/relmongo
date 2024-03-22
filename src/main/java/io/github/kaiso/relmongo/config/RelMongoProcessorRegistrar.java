@@ -27,12 +27,13 @@ public class RelMongoProcessorRegistrar implements ImportBeanDefinitionRegistrar
         String mongoTemplateRef = (String) annotationAttributes.get("mongoTemplateRef");
         Assert.notNull(mongoTemplateRef, "mongoTemplateRef in @EnableRelMongo must not be null!");
 
+        /**
         String[] beanDefNames = registry.getBeanDefinitionNames();
-
         System.out.println("RelMongoProcessorRegistrar.registerBeanDefinitions: beanDefNames.length=" + beanDefNames.length);
         for ( String beanDefName : beanDefNames ){
             System.out.println("\tRelMongoProcessorRegistrar.registerBeanDefinitions: beanDefName=" + beanDefName);
         }
+         */
 
         try {
             BeanDefinition mongoTemplateDef = registry.getBeanDefinition(mongoTemplateRef);
