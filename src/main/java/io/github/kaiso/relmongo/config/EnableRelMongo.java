@@ -36,7 +36,7 @@ import java.lang.annotation.*;
  *
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(value = { ElementType.TYPE, ElementType.METHOD })
+@Target(value = { ElementType.TYPE })
 @Import(value = RelMongoProcessorRegistrar.class)
 public @interface EnableRelMongo {
     
