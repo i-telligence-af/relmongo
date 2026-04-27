@@ -4,6 +4,7 @@ import io.github.kaiso.relmongo.data.model.Person;
 import io.github.kaiso.relmongo.data.repository.PersonRepositoryCustom;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
@@ -16,7 +17,7 @@ public class PersonRepositoryCustomImpl implements PersonRepositoryCustom {
 	private MongoTemplate mongoTemplate;
 
 	@Autowired
-	public PersonRepositoryCustomImpl(MongoTemplate mongoTemplate) {
+	public PersonRepositoryCustomImpl(@Qualifier("mongoTemplate") MongoTemplate mongoTemplate) {
 		super();
 		this.mongoTemplate = mongoTemplate;
 	}
