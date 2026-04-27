@@ -48,16 +48,23 @@ public final class PersistentRelationResolver {
             targetClass, type, fieldName, original, parent);
 
         if (Collection.class.isAssignableFrom(type)) {
-            // Java 23+ blocks CGLIB's reflection-based ClassLoader.defineClass for interface-only
-            // proxies (no superclass anchor). Use JDK Proxy instead, which handles pure interfaces
-            // natively without needing --add-opens java.base/java.lang.
-            Class<?>[] interfaces = type.isInterface()
-                ? new Class<?>[]{ LazyLoadingProxy.class, type }
-                : new Class<?>[]{ LazyLoadingProxy.class, List.class };
-            return Proxy.newProxyInstance(
-                targetClass.getClassLoader(),
-                interfaces,
-                new LazyCollectionInvocationHandler(lazyLoader));
+            if (type.isInterface()) {
+                // Java 23+ blocks CGLIB's reflection-based ClassLoader.defineClass for
+                // interface-only proxies (no superclass anchor). Use JDK Proxy instead.
+                return Proxy.newProxyInstance(
+                    targetClass.getClassLoader(),
+                    new Class<?>[]{ LazyLoadingProxy.class, type },
+                    new LazyCollectionInvocationHandler(lazyLoader));
+            } else {
+                // Concrete Collection type (e.g. ArrayList): the java.base module does not
+                // open java.util to unnamed modules, so neither JDK proxy nor CGLIB can
+                // create a compatible proxy. Fall back to eager loading.
+                try {
+                    return lazyLoader.loadObject();
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to eagerly load relation for concrete collection field type " + type.getName(), e);
+                }
+            }
         }
 
         Enhancer enhancer = new Enhancer();

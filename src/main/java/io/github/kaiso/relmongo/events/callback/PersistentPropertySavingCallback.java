@@ -78,7 +78,7 @@ public class PersistentPropertySavingCallback implements FieldCallback {
         Object reference = null;
         reference = ((org.bson.Document) document).get(field.getName());
         String childCollectionName = AnnotationsUtils.getCollectionName(field);
-        if (reference instanceof ArrayList) {
+        if (reference instanceof List) {
             List<org.bson.Document> list = new ArrayList<>();
             list.addAll(((List<?>) reference).stream()
                     .map(dbObject -> this.keepOnlyIdentifier(dbObject, childCollectionName, cascadeType))
@@ -125,9 +125,9 @@ public class PersistentPropertySavingCallback implements FieldCallback {
         if (currentDocument != null) {
             Object currentChild = currentDocument.get(propertyName);
             List<Object> objectsToRemove = null;
-            if (currentChild instanceof ArrayList) {
+            if (currentChild instanceof List) {
                 objectsToRemove = new ArrayList<>();
-                ArrayList<org.bson.Document> childList = (ArrayList<org.bson.Document>) currentChild;
+                List<org.bson.Document> childList = (List<org.bson.Document>) currentChild;
                 childList.removeIf(o -> child.contains(o.get("_id")));
                 objectsToRemove.addAll(childList.parallelStream().map(o -> o.get("_id")).collect(Collectors.toList()));
             } else if (currentChild instanceof org.bson.Document) {
