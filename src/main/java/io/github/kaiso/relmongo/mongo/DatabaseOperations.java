@@ -29,7 +29,11 @@ import org.springframework.util.Assert;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 
@@ -47,9 +51,17 @@ public final class DatabaseOperations {
         Assert.hasText(collection, "Collection must not be null or empty!");
         BasicDBObject query = new BasicDBObject("_id", new BasicDBObject("$in", ids));
         FindIterable<Document> result = mongoOperations.getCollection(collection).find(query);
+        Map<String, Document> byId = new LinkedHashMap<>();
+        for (Iterator<Document> iterator = result.iterator(); iterator.hasNext();) {
+            Document doc = iterator.next();
+            byId.put(doc.get("_id").toString(), doc);
+        }
         BasicDBList list = new BasicDBList();
-        for (Iterator<?> iterator = result.iterator(); iterator.hasNext();) {
-            list.add(iterator.next());
+        for (Object id : ids) {
+            Document doc = byId.get(id.toString());
+            if (doc != null) {
+                list.add(doc);
+            }
         }
         return list;
     }
@@ -62,10 +74,20 @@ public final class DatabaseOperations {
         return result.iterator().hasNext() ? result.iterator().next() : null;
     }
 
-    public static <T> Collection<T> findByIds(MongoOperations mongoOperations, Class<T> clazz, Object... id) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("_id").in(Arrays.asList(id)));
-        return mongoOperations.find(query, clazz);
+    public static <T> List<T> findByIds(MongoOperations mongoOperations, Class<T> clazz, Object... id) {
+        List<Object> idList = Arrays.asList(id);
+        Query query = new Query(Criteria.where("_id").in(idList));
+        List<T> results = mongoOperations.find(query, clazz);
+        Map<String, T> byId = new LinkedHashMap<>();
+        for (T result : results) {
+            Document doc = new Document();
+            mongoOperations.getConverter().write(result, doc);
+            byId.put(doc.get("_id").toString(), result);
+        }
+        return idList.stream()
+            .map(i -> byId.get(i.toString()))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
     }
 
     public static <T> T findByPropertyValue(MongoOperations mongoOperations, Class<T> clazz, String propertyName, Object value) {
