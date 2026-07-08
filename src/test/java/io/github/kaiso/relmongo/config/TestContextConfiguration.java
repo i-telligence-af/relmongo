@@ -58,7 +58,7 @@ public class TestContextConfiguration {
             synchronized (TestContextConfiguration.class) {
                 if (_running == null) {
                     logger.info("Starting MongoDB process...");
-                    _running = Mongod.instance().start(Version.Main.V8_0);
+                    _running = Mongod.instance().start(Version.V6_0_1);
                     de.flapdoodle.embed.mongo.commands.ServerAddress addr = _running.current().getServerAddress();
                     _mongo = MongoClients.create("mongodb://" + addr.getHost() + ":" + addr.getPort());
                     logger.info("MongoDB started on port {}", addr.getPort());
