@@ -176,6 +176,10 @@ public class PersistentPropertySavingCallback implements FieldCallback {
 
     @SuppressWarnings({ "unchecked" })
     private void removeOrphans(Object parentId, List<Object> child, String propertyName, Field field) {
+        if (parentId == null) {
+            // parent document doesn't exist in the DB yet (first-time insert) - nothing to orphan
+            return;
+        }
         Class<?> childClass = ReflectionsUtil.getGenericType(field);
         BasicDBList result = DatabaseOperations.getDocumentsById(mongoOperations, Arrays.asList(parentId),
                 collectionName);
