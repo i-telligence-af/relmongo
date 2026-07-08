@@ -181,7 +181,7 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
                 ReflectionUtils.setField(field, source, value);
             } catch ( Exception e ){
 
-                LOGGER.warn("Error while loading lazy field {} of type {}, falling back to FetchType." + FetchType.EAGER, fieldName, object.getClass());
+                LOGGER.debug("Error while loading lazy field {} of type {}, falling back to FetchType." + FetchType.EAGER, fieldName, object.getClass());
                 handleEager(field, type, identifierList);
 
             }
