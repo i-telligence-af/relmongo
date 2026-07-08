@@ -38,28 +38,25 @@ import org.springframework.util.StringUtils;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 
-import de.flapdoodle.embed.mongo.MongodExecutable;
-import de.flapdoodle.embed.mongo.MongodProcess;
-import de.flapdoodle.embed.mongo.MongodStarter;
-import de.flapdoodle.embed.mongo.config.IMongoCmdOptions;
-import de.flapdoodle.embed.mongo.config.MongoCmdOptionsBuilder;
-import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
+import de.flapdoodle.embed.mongo.commands.ServerAddress;
 import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
+import de.flapdoodle.embed.mongo.transitions.Mongod;
+import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess;
 import de.flapdoodle.embed.process.runtime.Network;
+import de.flapdoodle.reverse.TransitionWalker;
+import de.flapdoodle.reverse.transitions.Start;
 
 public class TestContextConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(TestContextConfiguration.class);
 
     /**
-     * please store Starter or RuntimeConfig in a static final field
-     * if you want to use artifact store caching (or else disable caching)
+     * please store the reached state in a static field if you want the embedded
+     * process to be reused across the test suite (or else disable caching)
      */
-    private static final MongodStarter starter = MongodStarter.getDefaultInstance();
+    private static TransitionWalker.ReachedState<RunningMongodProcess> _running;
 
-    private static MongodExecutable _mongodExe;
-    private static MongodProcess _mongod;
     @Autowired
     private ApplicationContext applicationContext;
     private static MongoClient _mongo;
@@ -69,14 +66,17 @@ public class TestContextConfiguration {
         try {
             synchronized (this) {
                 logger.info("Attempt to start MongoDB process...");
-                if (_mongod == null || !_mongod.isProcessRunning()) {
+                if (_running == null) {
                     logger.info("Starting MongoDB process...");
-                    IMongoCmdOptions cmdOptions = new MongoCmdOptionsBuilder().verbose(true).build();
-                    _mongodExe = starter.prepare(new MongodConfigBuilder().version(Version.Main.PRODUCTION)
-                        .net(new Net("localhost", 55777, Network.localhostIsIPv6())).cmdOptions(cmdOptions).build());
-                    _mongod = _mongodExe.start();
 
-                    _mongo = MongoClients.create("mongodb://localhost:55777");
+                    Mongod mongod = Mongod.builder()
+                        .net(Start.to(Net.class).initializedWith(Net.of("localhost", 55777, Network.localhostIsIPv6())))
+                        .build();
+
+                    _running = mongod.start(Version.V6_0_1);
+
+                    ServerAddress serverAddress = _running.current().getServerAddress();
+                    _mongo = MongoClients.create("mongodb://" + serverAddress.getHost() + ":" + serverAddress.getPort());
 
                     logger.info("MongoDB started");
                 }
@@ -84,17 +84,15 @@ public class TestContextConfiguration {
         } catch (Exception e) {
             logger.error("failed to start MongoDB ", e);
         }
-        // _mongo = new MongoClient(Arrays.asList(new ServerAddress("127.0.0.1",
-        // 30001),new ServerAddress("127.0.0.1", 30002),new ServerAddress("127.0.0.1",
-        // 30003)));
     }
 
     @Override
     protected void finalize() throws Throwable {
         logger.info("Finalizing {}", getClass());
         logger.info("Stopping MongoDB process...");
-        _mongod.stop();
-        _mongodExe.stop();
+        if (_running != null) {
+            _running.close();
+        }
         logger.info("MongoDB process stopped");
         super.finalize();
     }
