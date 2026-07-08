@@ -9,8 +9,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +41,8 @@ import de.flapdoodle.embed.mongo.transitions.Mongod;
 import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess;
 import de.flapdoodle.reverse.TransitionWalker;
 
+import jakarta.annotation.PostConstruct;
+
 public class TestContextConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(TestContextConfiguration.class);
@@ -59,6 +59,8 @@ public class TestContextConfiguration {
                 if (_running == null) {
                     logger.info("Starting MongoDB process...");
                     _running = Mongod.instance().start(Version.V6_0_1);
+                    Runtime.getRuntime().addShutdownHook(new Thread(TestContextConfiguration::stopMongod,
+                        "relmongo-embedded-mongod-shutdown"));
                     de.flapdoodle.embed.mongo.commands.ServerAddress addr = _running.current().getServerAddress();
                     _mongo = MongoClients.create("mongodb://" + addr.getHost() + ":" + addr.getPort());
                     logger.info("MongoDB started on port {}", addr.getPort());
@@ -67,6 +69,14 @@ public class TestContextConfiguration {
         } catch (Exception e) {
             logger.error("failed to start MongoDB ", e);
         }
+    }
+
+    private static void stopMongod() {
+        logger.info("Stopping MongoDB process...");
+        if (_running != null) {
+            _running.close();
+        }
+        logger.info("MongoDB process stopped");
     }
 
     @Bean
