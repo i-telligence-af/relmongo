@@ -19,8 +19,9 @@ package io.github.kaiso.relmongo.util;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
+import java.util.Map;
 /**
- * 
+ *
  * @author Kais OMRI
  *
  */
@@ -34,6 +35,13 @@ public final class ReflectionsUtil {
         if (Collection.class.isAssignableFrom(field.getType())) {
             try {
                 return (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+            } catch (ClassCastException e) {
+                //do nothing if the generic type is also generic we do not take it into account
+            }
+        } else if (Map.class.isAssignableFrom(field.getType())) {
+            try {
+                // Map<K, V> - RelMongo cares about the value type V, not the key K
+                return (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[1];
             } catch (ClassCastException e) {
                 //do nothing if the generic type is also generic we do not take it into account
             }

@@ -29,6 +29,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -65,8 +66,24 @@ public class PersistentPropertyPostSavingCallback implements FieldCallback {
         } else if ( field.isAnnotationPresent(Nested.class)) {
             Object object = field.get(source);
             if ( object != null ) {
-                PersistentPropertyPostSavingCallback callback = new PersistentPropertyPostSavingCallback(object, object.getClass(), mongoOperations);
-                callback.apply();
+                if ( object instanceof Collection ) {
+                    for ( Object item : (Collection<?>) object ) {
+                        if ( item != null ) {
+                            PersistentPropertyPostSavingCallback callback = new PersistentPropertyPostSavingCallback(item, item.getClass(), mongoOperations);
+                            callback.apply();
+                        }
+                    }
+                } else if ( object instanceof Map ) {
+                    for ( Object value : ((Map<?, ?>) object).values() ) {
+                        if ( value != null ) {
+                            PersistentPropertyPostSavingCallback callback = new PersistentPropertyPostSavingCallback(value, value.getClass(), mongoOperations);
+                            callback.apply();
+                        }
+                    }
+                } else {
+                    PersistentPropertyPostSavingCallback callback = new PersistentPropertyPostSavingCallback(object, object.getClass(), mongoOperations);
+                    callback.apply();
+                }
             }
         }
     }

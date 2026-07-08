@@ -36,6 +36,7 @@ import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -68,8 +69,24 @@ public class PersistentPropertyConvertingCallback implements FieldCallback {
         } else if ( field.isAnnotationPresent(Nested.class)) {
             Object object = field.get(source);
             if ( object != null ) {
-                PersistentPropertyConvertingCallback callback = new PersistentPropertyConvertingCallback(object);
-                ReflectionUtils.doWithFields(object.getClass(), callback);
+                if ( object instanceof Collection ) {
+                    for ( Object item : (Collection<?>) object ) {
+                        if ( item != null ) {
+                            PersistentPropertyConvertingCallback callback = new PersistentPropertyConvertingCallback(item);
+                            ReflectionUtils.doWithFields(item.getClass(), callback);
+                        }
+                    }
+                } else if ( object instanceof Map ) {
+                    for ( Object value : ((Map<?, ?>) object).values() ) {
+                        if ( value != null ) {
+                            PersistentPropertyConvertingCallback callback = new PersistentPropertyConvertingCallback(value);
+                            ReflectionUtils.doWithFields(value.getClass(), callback);
+                        }
+                    }
+                } else {
+                    PersistentPropertyConvertingCallback callback = new PersistentPropertyConvertingCallback(object);
+                    ReflectionUtils.doWithFields(object.getClass(), callback);
+                }
             }
         }
 
