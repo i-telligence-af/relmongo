@@ -74,6 +74,8 @@ public class TestContextConfiguration {
                         .build();
 
                     _running = mongod.start(Version.V6_0_1);
+                    Runtime.getRuntime().addShutdownHook(new Thread(TestContextConfiguration::stopMongod,
+                        "relmongo-embedded-mongod-shutdown"));
 
                     ServerAddress serverAddress = _running.current().getServerAddress();
                     _mongo = MongoClients.create("mongodb://" + serverAddress.getHost() + ":" + serverAddress.getPort());
@@ -86,15 +88,12 @@ public class TestContextConfiguration {
         }
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        logger.info("Finalizing {}", getClass());
+    private static void stopMongod() {
         logger.info("Stopping MongoDB process...");
         if (_running != null) {
             _running.close();
         }
         logger.info("MongoDB process stopped");
-        super.finalize();
     }
 
     @Bean
