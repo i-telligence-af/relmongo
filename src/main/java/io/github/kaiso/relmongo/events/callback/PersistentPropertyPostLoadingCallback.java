@@ -38,6 +38,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -63,6 +64,37 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
         this.forceFetchType = forceFetchType;
     }
 
+    private void processNestedCollection(Collection<?> collection, Object fieldValue) {
+        if ( !(fieldValue instanceof List) ) {
+            return;
+        }
+        List<?> documentList = (List<?>) fieldValue;
+        int i = 0;
+        for ( Object item : collection ) {
+            if ( item != null && i < documentList.size() && documentList.get(i) instanceof Document ) {
+                PersistentPropertyPostLoadingCallback callback = new PersistentPropertyPostLoadingCallback(item, (Document) documentList.get(i), mongoOperations, forceFetchType);
+                ReflectionUtils.doWithFields(item.getClass(), callback);
+            }
+            i++;
+        }
+    }
+
+    private void processNestedMap(Map<?, ?> map, Object fieldValue) {
+        if ( !(fieldValue instanceof Document) ) {
+            return;
+        }
+        Document bsonMap = (Document) fieldValue;
+        for ( Map.Entry<?, ?> entry : map.entrySet() ) {
+            Object value = entry.getValue();
+            if ( value == null ) continue;
+            Object entryDocument = bsonMap.get(String.valueOf(entry.getKey()));
+            if ( entryDocument instanceof Document ) {
+                PersistentPropertyPostLoadingCallback callback = new PersistentPropertyPostLoadingCallback(value, (Document) entryDocument, mongoOperations, forceFetchType);
+                ReflectionUtils.doWithFields(value.getClass(), callback);
+            }
+        }
+    }
+
     private void handleEager(Field field, Class<?> type, List<Object> identifierList) {
         if (Collection.class.isAssignableFrom(field.getType())) {
             ReflectionUtils.setField(field, source,
@@ -81,10 +113,16 @@ public class PersistentPropertyPostLoadingCallback implements FieldCallback {
             Object object = field.get(source);
             if ( object != null ) {
 
-                Document nestedDocument = (Document) ((org.bson.Document) document).get(field.getName());
+                Object fieldValue = document.get(field.getName());
 
-                PersistentPropertyPostLoadingCallback callback = new PersistentPropertyPostLoadingCallback(object, nestedDocument, mongoOperations, forceFetchType);
-                ReflectionUtils.doWithFields(object.getClass(), callback);
+                if ( object instanceof Collection ) {
+                    processNestedCollection((Collection<?>) object, fieldValue);
+                } else if ( object instanceof Map ) {
+                    processNestedMap((Map<?, ?>) object, fieldValue);
+                } else if ( fieldValue instanceof Document ) {
+                    PersistentPropertyPostLoadingCallback callback = new PersistentPropertyPostLoadingCallback(object, (Document) fieldValue, mongoOperations, forceFetchType);
+                    ReflectionUtils.doWithFields(object.getClass(), callback);
+                }
 
             }
             return;

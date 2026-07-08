@@ -19,10 +19,13 @@ package io.github.kaiso.relmongo.events.callback;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import io.github.kaiso.relmongo.annotation.Nested;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.ReflectionUtils.FieldCallback;
@@ -69,8 +72,66 @@ public class PersistentPropertySavingCallback implements FieldCallback {
                 && !StringUtils.hasText(field.getAnnotation(OneToOne.class).mappedBy())) {
             saveAssociation(field, field.getAnnotation(OneToOne.class).cascade(),
                     field.getAnnotation(OneToOne.class).orphanRemoval());
+        } else if ( field.isAnnotationPresent(Nested.class)) {
+            Object object = field.get(source);
+            if ( object != null ) {
+                Object fieldValue = ((org.bson.Document) document).get(field.getName());
+                if ( object instanceof Collection ) {
+                    processNestedCollection((Collection<?>) object, fieldValue);
+                } else if ( object instanceof Map ) {
+                    processNestedMap((Map<?, ?>) object, fieldValue);
+                } else if ( fieldValue instanceof org.bson.Document ) {
+                    PersistentPropertySavingCallback callback = new PersistentPropertySavingCallback(object, fieldValue, collectionName, mongoOperations);
+                    ReflectionUtils.doWithFields(object.getClass(), callback);
+                }
+            }
         }
 
+    }
+
+    /**
+     * A @Nested field whose Java value is a Collection (e.g. a List of embedded DTOs) is not itself
+     * an object with fields to walk - ReflectionUtils.doWithFields(collection.getClass(), ...) would
+     * incorrectly process the Collection implementation's own internal fields. Instead, walk each
+     * element together with its corresponding BSON sub-document (list order is preserved by Spring
+     * Data's Mongo converter), recursing so each element's own @OneToOne/@OneToMany/@Nested fields
+     * (and any further nested collections) are processed correctly.
+     */
+    private void processNestedCollection(Collection<?> collection, Object fieldValue) {
+        if ( !(fieldValue instanceof List) ) {
+            return;
+        }
+        List<?> bsonList = (List<?>) fieldValue;
+        int i = 0;
+        for ( Object item : collection ) {
+            if ( item != null && i < bsonList.size() && bsonList.get(i) instanceof org.bson.Document ) {
+                PersistentPropertySavingCallback callback = new PersistentPropertySavingCallback(item, bsonList.get(i), collectionName, mongoOperations);
+                ReflectionUtils.doWithFields(item.getClass(), callback);
+            }
+            i++;
+        }
+    }
+
+    /**
+     * A @Nested field whose Java value is a Map (e.g. Map&lt;String, ContentDTO&gt;) is converted by
+     * Spring Data's Mongo converter into a BSON sub-Document keyed by the same map keys - not a List.
+     * Walk each entry's value together with the BSON value under the same key, recursing so each
+     * entry's own @OneToOne/@OneToMany/@Nested fields are processed correctly.
+     */
+    private void processNestedMap(Map<?, ?> map, Object fieldValue) {
+        if ( !(fieldValue instanceof org.bson.Document) ) {
+            return;
+        }
+        org.bson.Document bsonMap = (org.bson.Document) fieldValue;
+        for ( Map.Entry<?, ?> entry : map.entrySet() ) {
+            Object value = entry.getValue();
+            if ( value == null ) continue;
+            Object entryBsonValue = bsonMap.get(String.valueOf(entry.getKey()));
+            if ( entryBsonValue instanceof org.bson.Document ) {
+                PersistentPropertySavingCallback callback = new PersistentPropertySavingCallback(value, entryBsonValue, collectionName, mongoOperations);
+                ReflectionUtils.doWithFields(value.getClass(), callback);
+            }
+        }
     }
 
     private void saveAssociation(Field field, CascadeType cascadeType, Boolean orphanRemoval) {

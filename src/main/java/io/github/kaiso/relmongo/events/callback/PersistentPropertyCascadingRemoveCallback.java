@@ -34,6 +34,8 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -65,18 +67,45 @@ public class PersistentPropertyCascadingRemoveCallback implements FieldCallback 
             doCascade(field, field.getAnnotation(OneToOne.class).cascade());
         } else if ( field.isAnnotationPresent(Nested.class)) {
 
-            Document childDocument = (Document) source.get(field.getName());
-            
-            if ( childDocument != null ) {
-                
+            Object fieldValue = source.get(field.getName());
+
+            if ( fieldValue != null ) {
+
                 Class<?> childEntityType = ReflectionsUtil.getGenericType(field);
-                
-                PersistentPropertyCascadingRemoveCallback callback = new PersistentPropertyCascadingRemoveCallback(childDocument, mongoOperations,
-                        childEntityType, collectionName);
+
+                if ( fieldValue instanceof List ) {
+
+                    for ( Object element : (List<?>) fieldValue ) {
+                        if ( element instanceof Document ) {
+                            PersistentPropertyCascadingRemoveCallback callback = new PersistentPropertyCascadingRemoveCallback((Document) element, mongoOperations,
+                                    childEntityType, collectionName);
+                            callback.doProcessing();
+                        }
+                    }
+
+                } else if ( fieldValue instanceof Document && Map.class.isAssignableFrom(field.getType()) ) {
+
+                    // a @Nested Map<K, V> field is converted to a BSON sub-Document keyed by the map's
+                    // keys - indistinguishable from a single nested POJO's Document by shape alone, so
+                    // disambiguate via the field's declared type, and walk each entry's value
+                    for ( Object value : ((Document) fieldValue).values() ) {
+                        if ( value instanceof Document ) {
+                            PersistentPropertyCascadingRemoveCallback callback = new PersistentPropertyCascadingRemoveCallback((Document) value, mongoOperations,
+                                    childEntityType, collectionName);
+                            callback.doProcessing();
+                        }
+                    }
+
+                } else if ( fieldValue instanceof Document ) {
+
+                    PersistentPropertyCascadingRemoveCallback callback = new PersistentPropertyCascadingRemoveCallback((Document) fieldValue, mongoOperations,
+                            childEntityType, collectionName);
                     callback.doProcessing();
+
+                }
+
             }
-            
-            
+
         }
 
     }
