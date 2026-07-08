@@ -73,7 +73,7 @@ public class TestContextConfiguration {
                         .net(Start.to(Net.class).initializedWith(Net.of("localhost", 55777, Network.localhostIsIPv6())))
                         .build();
 
-                    _running = mongod.start(Version.V6_0_1);
+                    _running = mongod.start(Version.V8_0_9);
                     Runtime.getRuntime().addShutdownHook(new Thread(TestContextConfiguration::stopMongod,
                         "relmongo-embedded-mongod-shutdown"));
 
