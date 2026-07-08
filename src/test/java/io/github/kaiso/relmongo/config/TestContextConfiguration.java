@@ -58,7 +58,7 @@ public class TestContextConfiguration {
             synchronized (TestContextConfiguration.class) {
                 if (_running == null) {
                     logger.info("Starting MongoDB process...");
-                    _running = Mongod.instance().start(Version.V6_0_1);
+                    _running = Mongod.instance().start(Version.V8_0_9);
                     Runtime.getRuntime().addShutdownHook(new Thread(TestContextConfiguration::stopMongod,
                         "relmongo-embedded-mongod-shutdown"));
                     de.flapdoodle.embed.mongo.commands.ServerAddress addr = _running.current().getServerAddress();
