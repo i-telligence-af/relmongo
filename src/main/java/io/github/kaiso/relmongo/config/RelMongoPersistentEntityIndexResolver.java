@@ -1,5 +1,6 @@
 package io.github.kaiso.relmongo.config;
 
+import io.github.kaiso.relmongo.annotation.Nested;
 import io.github.kaiso.relmongo.annotation.RelMongoAnnotation;
 import io.github.kaiso.relmongo.config.RelMongoPersistentEntityIndexResolver.CycleGuard.Path;
 import io.github.kaiso.relmongo.config.RelMongoPersistentEntityIndexResolver.TextIndexIncludeOptions.IncludeStrategy;
@@ -85,7 +86,7 @@ public class RelMongoPersistentEntityIndexResolver extends MongoPersistentEntity
         List<IndexDefinitionHolder> indexes, CycleGuard guard) {
 
         try {
-            if (persistentProperty.isAnnotationPresent(RelMongoAnnotation.class)) {
+            if (isAssociation(persistentProperty)) {
                 return;
             }
             if (persistentProperty.isEntity()) {
@@ -101,6 +102,16 @@ public class RelMongoPersistentEntityIndexResolver extends MongoPersistentEntity
         } catch (CyclicPropertyReferenceException e) {
             logger.info(e.getMessage());
         }
+    }
+
+    /**
+     * Associations reference documents of another collection, their indexes belong
+     * there. {@link Nested} is also a RelMongo annotation but is embedded in the
+     * same document, so it must be traversed.
+     */
+    private static boolean isAssociation(MongoPersistentProperty persistentProperty) {
+        return persistentProperty.isAnnotationPresent(RelMongoAnnotation.class)
+            && !persistentProperty.isAnnotationPresent(Nested.class);
     }
 
     private List<IndexDefinitionHolder> createIndexDefinitionHolderForProperty(String dotPath, String collection,
@@ -139,6 +150,10 @@ public class RelMongoPersistentEntityIndexResolver extends MongoPersistentEntity
 
     private void guardAndPotentiallyAddIndexForProperty(MongoPersistentProperty persistentProperty, String dotPath,
         Path path, String collection, List<IndexDefinitionHolder> indexes, CycleGuard guard) {
+
+        if (isAssociation(persistentProperty)) {
+            return;
+        }
 
         String propertyDotPath = (StringUtils.hasText(dotPath) ? dotPath + "." : "") + persistentProperty.getFieldName();
 
